@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "RentShield",
+    "slug": "rentshield",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAFAF7"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rentshield.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "RentShield uses your camera to capture rental agreements and move-in condition photos.",
+        "NSPhotoLibraryUsageDescription": "RentShield needs access to your photo library so you can attach pictures of agreements and move-in condition.",
+        "NSLocationWhenInUseUsageDescription": "RentShield tags your move-in evidence photos with location so they hold up as proof later."
+      }
+    },
+    "android": {
+      "package": "com.rentshield.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FAFAF7"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c653f4d-3906-4eb3-986d-932c7c2671ca"
+      }
+    },
+    "plugins": [
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "RentShield needs access to your photos to attach rental agreement images and move-in condition photos.",
+          "cameraPermission": "RentShield needs camera access to capture rental agreement pages and move-in condition photos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "RentShield tags your move-in evidence photos with location so they hold up as proof later."
+        }
+      ]
+    ]
+  }
+}

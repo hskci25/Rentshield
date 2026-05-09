@@ -1,0 +1,27 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Deploy: connect repo → New Blueprint → select this file, or create a Web Service manually.
+services:
+  - type: web
+    name: rentshield-backend
+    runtime: docker
+    region: oregon
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/otp/provider
+    envVars:
+      - key: OTP_PROVIDER
+        value: mock
+      - key: OTP_EXPOSE_OTP_IN_RESPONSE
+        value: "true"
+      # Switch to Twilio for real SMS (set sync: false in dashboard for secrets):
+      # - key: OTP_PROVIDER
+      #   value: twilio
+      # - key: OTP_EXPOSE_OTP_IN_RESPONSE
+      #   value: "false"
+      # - key: TWILIO_ACCOUNT_SID
+      #   sync: false
+      # - key: TWILIO_AUTH_TOKEN
+      #   sync: false
+      # - key: TWILIO_VERIFY_SERVICE_SID
+      #   sync: false
