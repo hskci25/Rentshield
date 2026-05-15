@@ -14,6 +14,11 @@ services:
         value: mock
       - key: OTP_EXPOSE_OTP_IN_RESPONSE
         value: "true"
+      # Optional — Google Play reviewer login (mock only). Set same values in Play Console → App access.
+      # - key: OTP_PLAY_REVIEWER_MOBILE
+      #   value: "9876543210"
+      # - key: OTP_PLAY_REVIEWER_OTP
+      #   value: "891234"
       # Switch to Twilio for real SMS (set sync: false in dashboard for secrets):
       # - key: OTP_PROVIDER
       #   value: twilio

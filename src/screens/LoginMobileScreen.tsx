@@ -39,8 +39,14 @@ function formatIndianPhone(digits: string): string {
  * to the bottom when content fits, but scrolls cleanly above the
  * software keyboard on both iOS and Android.
  */
+export interface OtpSentPayload {
+  mobileNumber: string;
+  /** Present when backend exposes OTP (e.g. mock / dev); omitted for normal SMS-only flows. */
+  exposedOtp?: string | null;
+}
+
 interface LoginMobileScreenProps {
-  onOtpSent: (mobileNumber: string) => void;
+  onOtpSent: (payload: OtpSentPayload) => void;
 }
 
 export function LoginMobileScreen({
@@ -311,10 +317,10 @@ export function LoginMobileScreen({
                 try {
                   setSubmitting(true);
                   const response = await sendOtp(rawDigits);
-                  if (response.otp) {
-                    Alert.alert('Mock OTP', `Use ${response.otp} to continue.`);
-                  }
-                  onOtpSent(rawDigits);
+                  onOtpSent({
+                    mobileNumber: rawDigits,
+                    exposedOtp: response.otp ?? null,
+                  });
                 } catch (error) {
                   Alert.alert(
                     'OTP failed',

@@ -26,16 +26,31 @@ public class OtpStartupLogger implements ApplicationRunner {
 	@Value("${twilio.verify-service-sid:}")
 	private String twilioVerifyServiceSid;
 
+	@Value("${otp.play-reviewer-mobile:}")
+	private String playReviewerMobile;
+
+	@Value("${otp.play-reviewer-otp:}")
+	private String playReviewerOtp;
+
 	@Override
 	public void run(ApplicationArguments args) {
 		log.info(
-			"OTP startup config => provider={}, exposeOtpInResponse={}, ttlSeconds={}, maxAttempts={}, twilioVerifyServiceSid={}",
+			"OTP startup config => provider={}, exposeOtpInResponse={}, ttlSeconds={}, maxAttempts={}, twilioVerifyServiceSid={}, playReviewerCredentialsConfigured={}",
 			provider,
 			exposeOtpInResponse,
 			ttlSeconds,
 			maxAttempts,
-			maskSid(twilioVerifyServiceSid)
+			maskSid(twilioVerifyServiceSid),
+			isPlayReviewerConfigured()
 		);
+	}
+
+	private boolean isPlayReviewerConfigured() {
+		return "mock".equalsIgnoreCase(provider)
+			&& playReviewerMobile != null
+			&& !playReviewerMobile.trim().isEmpty()
+			&& playReviewerOtp != null
+			&& !playReviewerOtp.trim().isEmpty();
 	}
 
 	private String maskSid(String sid) {

@@ -75,6 +75,8 @@ Edit `src/main/resources/application.properties`:
 - `twilio.account-sid=${TWILIO_ACCOUNT_SID:}`
 - `twilio.auth-token=${TWILIO_AUTH_TOKEN:}`
 - `twilio.verify-service-sid=${TWILIO_VERIFY_SERVICE_SID:}`
+- `otp.play-reviewer-mobile=${OTP_PLAY_REVIEWER_MOBILE:}` (optional, mock + Play review)
+- `otp.play-reviewer-otp=${OTP_PLAY_REVIEWER_OTP:}` (optional, mock + Play review)
 
 For Twilio mode (real OTP), set:
 
@@ -97,6 +99,14 @@ TWILIO_VERIFY_SERVICE_SID=VAxxxxxxxxxxxxxxxx
 cd backend
 ./gradlew bootRun
 ```
+
+## Google Play review (mock only)
+
+You can expose **fixed reviewer credentials** so Play Console “App access” can list a stable phone + “password” (the OTP):
+
+- Set env (e.g. on Render): `OTP_PLAY_REVIEWER_MOBILE` = 10-digit Indian mobile `^[6-9]\\d{9}$`, and `OTP_PLAY_REVIEWER_OTP` = 6-digit code.
+- Same values go in Play Console (phone with `+91` country code).
+- Ignored when `otp.provider=twilio`.
 
 ## Notes
 

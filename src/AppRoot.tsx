@@ -43,6 +43,8 @@ const MENU_ROUTES: ReadonlyArray<Route> = [
 export function AppRoot(): React.JSX.Element {
   const [route, setRoute] = useState<Route>('splash');
   const [mobileNumber, setMobileNumber] = useState('');
+  /** When backend returns OTP in API (mock), pass through for reviewer / demo sharing. */
+  const [exposedOtpFromSend, setExposedOtpFromSend] = useState<string | null>(null);
   const [profileMode, setProfileMode] = useState<ProfileMode>('onboarding');
 
   // Drives the crossfade between the splash and the login surface.
@@ -116,8 +118,13 @@ export function AppRoot(): React.JSX.Element {
           style={[StyleSheet.absoluteFill, { opacity: loginOpacity }]}
         >
           <LoginMobileScreen
-            onOtpSent={(mobile) => {
-              setMobileNumber(mobile);
+            onOtpSent={({ mobileNumber: nextMobile, exposedOtp }) => {
+              setMobileNumber(nextMobile);
+              setExposedOtpFromSend(
+                typeof exposedOtp === 'string' && exposedOtp.trim().length > 0
+                  ? exposedOtp.trim()
+                  : null,
+              );
               setRoute('otp');
             }}
           />
@@ -127,8 +134,13 @@ export function AppRoot(): React.JSX.Element {
         <View style={StyleSheet.absoluteFill}>
           <OtpVerificationScreen
             mobileNumber={mobileNumber}
-            onBack={() => setRoute('login')}
+            initialExposedOtp={exposedOtpFromSend}
+            onBack={() => {
+              setExposedOtpFromSend(null);
+              setRoute('login');
+            }}
             onVerified={() => {
+              setExposedOtpFromSend(null);
               handleOtpVerified().catch(() => undefined);
             }}
           />

@@ -1,10 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +18,8 @@ import { colors, spacing, typography } from '../theme/tokens';
 
 interface OtpVerificationScreenProps {
   mobileNumber: string;
+  /** When the server returns the OTP in the API (e.g. mock / review backend), show it here for sharing. */
+  initialExposedOtp?: string | null;
   onBack: () => void;
   onVerified: () => void;
 }
@@ -30,6 +33,7 @@ function maskIndianNumber(mobileNumber: string): string {
 
 export default function OtpVerificationScreen({
   mobileNumber,
+  initialExposedOtp = null,
   onBack,
   onVerified,
 }: OtpVerificationScreenProps): React.JSX.Element {
@@ -38,7 +42,21 @@ export default function OtpVerificationScreen({
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [exposedOtpHint, setExposedOtpHint] = useState<string | null>(() => {
+    if (typeof initialExposedOtp === 'string' && initialExposedOtp.trim().length > 0) {
+      return initialExposedOtp.trim();
+    }
+    return null;
+  });
   const hiddenInputRef = useRef<TextInput | null>(null);
+
+  useEffect(() => {
+    const next =
+      typeof initialExposedOtp === 'string' && initialExposedOtp.trim().length > 0
+        ? initialExposedOtp.trim()
+        : null;
+    setExposedOtpHint(next);
+  }, [initialExposedOtp, mobileNumber]);
 
   const masked = useMemo(() => maskIndianNumber(mobileNumber), [mobileNumber]);
   const canSubmit = otp.length === OTP_LENGTH && !submitting;
@@ -62,12 +80,31 @@ export default function OtpVerificationScreen({
     }
   };
 
+  const handleShareExposedOtp = async () => {
+    if (!exposedOtpHint) return;
+    try {
+      await Share.share({
+        message: `RentShield verification code: ${exposedOtpHint}`,
+        title: 'RentShield code',
+      });
+    } catch {
+      // User dismissed the share sheet.
+    }
+  };
+
   const handleResend = async () => {
     try {
       setResending(true);
       setErrorText(null);
       setOtp('');
-      await sendOtp(mobileNumber);
+      const response = await sendOtp(mobileNumber);
+      const next =
+        typeof response.otp === 'string' && response.otp.trim().length > 0
+          ? response.otp.trim()
+          : null;
+      if (next) {
+        setExposedOtpHint(next);
+      }
       Alert.alert('OTP resent', 'A new code has been sent.');
     } catch (error) {
       setErrorText(
@@ -108,6 +145,25 @@ export default function OtpVerificationScreen({
             <Text style={styles.subtitle}>
               We sent a 6-digit code to {masked}.
             </Text>
+
+            {exposedOtpHint ? (
+              <View style={styles.exposedOtpCard}>
+                <Text style={styles.exposedOtpLabel}>Code (testing / review)</Text>
+                <Text style={styles.exposedOtpDigits} selectable>
+                  {exposedOtpHint}
+                </Text>
+                <Text style={styles.exposedOtpFootnote}>
+                  Shown when the server returns the code (e.g. mock OTP). Not shown for normal SMS-only
+                  production.
+                </Text>
+                <Pressable
+                  onPress={() => void handleShareExposedOtp()}
+                  style={({ pressed }) => [styles.shareOtpButton, pressed && styles.shareOtpButtonPressed]}
+                >
+                  <Text style={styles.shareOtpLabel}>SHARE CODE</Text>
+                </Pressable>
+              </View>
+            ) : null}
 
             <Pressable
               onPress={() => hiddenInputRef.current?.focus()}
@@ -230,6 +286,54 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: colors.onSurfaceVariant,
     maxWidth: 280,
+  },
+  exposedOtpCard: {
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.outlineVariant,
+  },
+  exposedOtpLabel: {
+    fontFamily: typography.label.fontFamily,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: colors.onSurfaceVariant,
+  },
+  exposedOtpDigits: {
+    marginTop: spacing.sm,
+    fontFamily: typography.serif.fontFamily,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: 4,
+    color: colors.onSurface,
+  },
+  exposedOtpFootnote: {
+    marginTop: spacing.sm,
+    fontFamily: typography.body.fontFamily,
+    fontSize: 12,
+    lineHeight: 18,
+    color: colors.onSurfaceVariant,
+  },
+  shareOtpButton: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.outline,
+    backgroundColor: colors.surface,
+  },
+  shareOtpButtonPressed: {
+    opacity: 0.85,
+  },
+  shareOtpLabel: {
+    fontFamily: typography.label.fontFamily,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: colors.onSurface,
   },
   otpRow: {
     marginTop: spacing.xxl,
