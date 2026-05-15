@@ -46,7 +46,7 @@ public class OtpService {
 		this.exposeOtpInResponse = exposeOtpInResponse;
 		this.provider = provider;
 		this.twilioVerifyServiceSid = twilioVerifyServiceSid;
-		this.playReviewerMobile = playReviewerMobile != null ? playReviewerMobile.trim() : "";
+		this.playReviewerMobile = normalizeTenDigitIndianMobile(playReviewerMobile);
 		this.playReviewerOtp = playReviewerOtp != null ? playReviewerOtp.trim() : "";
 
 		if (isTwilioProvider()) {
@@ -84,7 +84,7 @@ public class OtpService {
 			otp = generateOtp();
 			expiresAt = Instant.now().plusSeconds(ttlSeconds);
 		}
-		otpStore.put(mobileNumber.trim(), new OtpSession(otp, expiresAt));
+		otpStore.put(normalizeTenDigitIndianMobile(mobileNumber), new OtpSession(otp, expiresAt));
 
 		String responseOtp = exposeOtpInResponse ? otp : null;
 		return new SendOtpResponse(
@@ -113,22 +113,22 @@ public class OtpService {
 		}
 
 		if (isPlayReviewerConfigured() && isPlayReviewerPair(mobileNumber, otp)) {
-			otpStore.remove(mobileNumber.trim());
+			otpStore.remove(normalizeTenDigitIndianMobile(mobileNumber));
 			return new VerifyOtpResponse(true, "OTP verified successfully");
 		}
 
-		OtpSession session = otpStore.get(mobileNumber.trim());
+		OtpSession session = otpStore.get(normalizeTenDigitIndianMobile(mobileNumber));
 		if (session == null) {
 			return new VerifyOtpResponse(false, "OTP not found. Please request a new OTP.");
 		}
 
 		if (Instant.now().isAfter(session.getExpiresAt())) {
-			otpStore.remove(mobileNumber.trim());
+			otpStore.remove(normalizeTenDigitIndianMobile(mobileNumber));
 			return new VerifyOtpResponse(false, "OTP expired. Please request a new OTP.");
 		}
 
 		if (session.getFailedAttempts() >= maxAttempts) {
-			otpStore.remove(mobileNumber.trim());
+			otpStore.remove(normalizeTenDigitIndianMobile(mobileNumber));
 			return new VerifyOtpResponse(false, "Too many failed attempts. Please request a new OTP.");
 		}
 
@@ -136,13 +136,13 @@ public class OtpService {
 			session.incrementFailedAttempts();
 			int attemptsLeft = Math.max(maxAttempts - session.getFailedAttempts(), 0);
 			if (attemptsLeft == 0) {
-				otpStore.remove(mobileNumber.trim());
+				otpStore.remove(normalizeTenDigitIndianMobile(mobileNumber));
 				return new VerifyOtpResponse(false, "Too many failed attempts. Please request a new OTP.");
 			}
 			return new VerifyOtpResponse(false, "Invalid OTP. Attempts left: " + attemptsLeft);
 		}
 
-		otpStore.remove(mobileNumber.trim());
+		otpStore.remove(normalizeTenDigitIndianMobile(mobileNumber));
 		return new VerifyOtpResponse(true, "OTP verified successfully");
 	}
 
@@ -168,7 +168,7 @@ public class OtpService {
 	}
 
 	private boolean isPlayReviewerMobile(String mobileNumber) {
-		return mobileNumber != null && playReviewerMobile.equals(mobileNumber.trim());
+		return normalizeTenDigitIndianMobile(mobileNumber).equals(playReviewerMobile);
 	}
 
 	private boolean isPlayReviewerPair(String mobileNumber, String otpInput) {
@@ -179,5 +179,24 @@ public class OtpService {
 
 	public String getActiveProvider() {
 		return provider;
+	}
+
+	/** True when mock mode and reviewer mobile + OTP env vars are set (for diagnostics / Play Console verification). */
+	public boolean isPlayReviewerFeatureEnabled() {
+		return isPlayReviewerConfigured();
+	}
+
+	private static String normalizeTenDigitIndianMobile(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return "";
+		}
+		String digitsOnly = raw.replaceAll("\\D", "");
+		if (digitsOnly.startsWith("91") && digitsOnly.length() >= 12) {
+			digitsOnly = digitsOnly.substring(2);
+		}
+		if (digitsOnly.length() >= 11) {
+			digitsOnly = digitsOnly.substring(digitsOnly.length() - 10);
+		}
+		return digitsOnly;
 	}
 }

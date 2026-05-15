@@ -28,7 +28,7 @@ const OTP_LENGTH = 6;
 
 function maskIndianNumber(mobileNumber: string): string {
   if (mobileNumber.length !== 10) return mobileNumber;
-  return `+91 ${mobileNumber.slice(0, 2)}XXX XXX${mobileNumber.slice(8)}`;
+  return `${mobileNumber.slice(0, 2)} XXX XXX ${mobileNumber.slice(8)}`;
 }
 
 export default function OtpVerificationScreen({

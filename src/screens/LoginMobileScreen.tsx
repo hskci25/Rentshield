@@ -20,6 +20,14 @@ import { colors, motion, spacing, typography } from '../theme/tokens';
 
 const PHONE_MAX_DIGITS = 10;
 
+function normalizeIndianTenDigitInput(raw: string): string {
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('91') && digits.length >= 12) {
+    digits = digits.slice(2);
+  }
+  return digits.slice(0, PHONE_MAX_DIGITS);
+}
+
 function formatIndianPhone(digits: string): string {
   if (digits.length <= 5) {
     return digits;
@@ -31,9 +39,12 @@ function formatIndianPhone(digits: string): string {
  * RentShield — Login (Mobile Number) screen.
  *
  * Editorial fintech entry point: a small serif "RENTSHIELD" header,
- * a two-beat "Move in. Worry less." headline, a +91-prefixed mobile
- * input with a hairline underline, an ink-coloured "Get code" CTA,
- * and an architectural blueprint motif anchored to the right edge.
+ * a two-beat "Move in. Worry less." headline, a 10-digit mobile field
+ * with a hairline underline, an ink-coloured "Get code" CTA, and an
+ * architectural blueprint motif anchored to the right edge.
+ *
+ * Users enter ten digits only; pastes that include leading country code
+ * 91 are normalized. The OTP API receives the 10-digit string.
  *
  * The body uses a ScrollView + flex spacer so the footer stays pinned
  * to the bottom when content fits, but scrolls cleanly above the
@@ -260,33 +271,26 @@ export function LoginMobileScreen({
               },
             ]}
           >
-            <Text style={styles.fieldLabel}>MOBILE NUMBER</Text>
+            <Text style={styles.fieldLabel}>MOBILE NUMBER (10 DIGITS)</Text>
             <View
               style={[
                 styles.fieldRow,
                 isFocused ? styles.fieldRowFocused : undefined,
               ]}
             >
-              <Text allowFontScaling={false} style={styles.prefix}>
-                +91
-              </Text>
               <TextInput
                 value={formattedDigits}
-                onChangeText={(next) => {
-                  const digitsOnly = next
-                    .replace(/\D/g, '')
-                    .slice(0, PHONE_MAX_DIGITS);
-                  setRawDigits(digitsOnly);
-                }}
+                onChangeText={(next) => setRawDigits(normalizeIndianTenDigitInput(next))}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder="00000 00000"
+                placeholder="98765 43210"
                 placeholderTextColor={colors.outlineVariant}
                 keyboardType="phone-pad"
-                inputMode="tel"
+                inputMode="numeric"
                 autoComplete="tel"
                 textContentType="telephoneNumber"
-                maxLength={11}
+                maxLength={15}
+                accessibilityLabel="Ten digit mobile number"
                 style={styles.input}
                 allowFontScaling={false}
                 returnKeyType="done"
@@ -424,7 +428,6 @@ const styles = StyleSheet.create({
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
     paddingBottom: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.outlineVariant,
@@ -432,13 +435,6 @@ const styles = StyleSheet.create({
   fieldRowFocused: {
     borderBottomWidth: 1,
     borderBottomColor: colors.onSurface,
-  },
-  prefix: {
-    fontFamily: typography.serif.fontFamily,
-    color: colors.outline,
-    fontSize: 24,
-    lineHeight: 28,
-    letterSpacing: -0.48,
   },
   input: {
     flex: 1,

@@ -40,6 +40,12 @@ public class OtpController {
 
 	@GetMapping("/provider")
 	public ResponseEntity<Map<String, String>> provider() {
-		return ResponseEntity.ok(Map.of("provider", otpService.getActiveProvider()));
+		return ResponseEntity.ok(
+			Map.of(
+				"provider", otpService.getActiveProvider(),
+				"playReviewerConfigured",
+				Boolean.toString(otpService.isPlayReviewerFeatureEnabled())
+			)
+		);
 	}
 }
